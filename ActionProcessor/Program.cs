@@ -118,7 +118,6 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Log.Warning("Database migration failed (this is normal in development without PostgreSQL): {Error}", ex.Message);
-        // Continue execution - the app can start without DB for API documentation
     }
 }
 
