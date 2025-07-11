@@ -1,0 +1,6 @@
+@ActionProcessor_HostAddress = http://localhost:5206
+
+GET {{ActionProcessor_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

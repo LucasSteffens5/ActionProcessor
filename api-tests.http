@@ -1,0 +1,67 @@
+### Action Processor API Tests
+### Base URL for local development
+@baseUrl = http://localhost:8080
+@batchId = {{$guid}}
+
+### Health Check
+GET {{baseUrl}}/health
+Accept: application/json
+
+### Upload File (using sample data)
+POST {{baseUrl}}/api/files/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="sample.csv"
+Content-Type: text/csv
+
+123456789,client001,SAMPLE_ACTION,priority,high,region,north
+987654321,client002,SAMPLE_ACTION,priority,low,region,south
+456789123,client003,SAMPLE_ACTION,priority,medium,region,east
+789123456,client004,SAMPLE_ACTION,priority,high,region,west
+321654987,client005,SAMPLE_ACTION,priority,low,region,center
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Get All Batches
+GET {{baseUrl}}/api/files/batches
+Accept: application/json
+
+### Get Batch Status (replace with actual batch ID)
+GET {{baseUrl}}/api/files/batches/{{batchId}}
+Accept: application/json
+
+### Get Failed Events for Batch
+GET {{baseUrl}}/api/files/batches/{{batchId}}/failed-events
+Accept: application/json
+
+### Retry Failed Events
+POST {{baseUrl}}/api/files/batches/{{batchId}}/retry
+Content-Type: application/json
+
+{
+  "eventIds": []
+}
+
+### Test with invalid file format
+POST {{baseUrl}}/api/files/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="invalid.csv"
+Content-Type: text/csv
+
+invalid line without proper format
+123456789,client001
+another invalid line
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Test with empty file
+POST {{baseUrl}}/api/files/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="empty.csv"
+Content-Type: text/csv
+
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
