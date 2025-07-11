@@ -45,7 +45,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Database
 builder.Services.AddDbContext<ActionProcessorDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .UseSnakeCaseNamingConvention());
+        .UseSnakeCaseNamingConvention());
 
 // Repositories
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();
@@ -63,10 +63,7 @@ builder.Services.AddScoped<SampleActionHandler>();
 builder.Services.AddScoped<IActionHandlerFactory, ActionHandlerFactory>();
 
 // HTTP Client for external API calls
-builder.Services.AddHttpClient<SampleActionHandler>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+builder.Services.AddHttpClient<SampleActionHandler>(client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // Background Services
 // builder.Services.AddHostedService<EventProcessorService>();
@@ -80,8 +77,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
@@ -108,19 +105,7 @@ app.UseSerilogRequestLogging();
 app.MapEndpoints();
 
 // Apply database migrations
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ActionProcessorDbContext>();
-    try
-    {
-        await context.Database.MigrateAsync();
-        Log.Information("Database migrations applied successfully");
-    }
-    catch (Exception ex)
-    {
-        Log.Warning("Database migration failed (this is normal in development without PostgreSQL): {Error}", ex.Message);
-    }
-}
+await MigrateAsync(app);
 
 try
 {
@@ -134,4 +119,12 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+async Task MigrateAsync(WebApplication webApplication)
+{
+    using var scope = webApplication.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ActionProcessorDbContext>();
+    await context.Database.MigrateAsync();
+    Log.Information("Database migrations applied successfully");
 }
