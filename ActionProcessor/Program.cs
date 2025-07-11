@@ -9,6 +9,8 @@ using ActionProcessor.Infrastructure.Repositories;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Reflection;
+using ActionProcessor.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +69,9 @@ builder.Services.AddHttpClient<SampleActionHandler>(client =>
 // Background Services
 builder.Services.AddHostedService<EventProcessorService>();
 
+// Register endpoints
+builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
+
 // CORS (if needed for frontend)
 builder.Services.AddCors(options =>
 {
@@ -98,17 +103,7 @@ app.UseCors("AllowAll");
 app.UseSerilogRequestLogging();
 
 // Map endpoints
-app.MapFileEndpoints();
-
-// Health check endpoint
-app.MapGet("/health", () => new { 
-    Status = "Healthy", 
-    Timestamp = DateTime.UtcNow,
-    Version = "1.0.0"
-})
-.WithName("HealthCheck")
-.WithSummary("Health check endpoint")
-.WithTags("Health");
+app.MapEndpoints();
 
 // Ensure database is created
 using (var scope = app.Services.CreateScope())
