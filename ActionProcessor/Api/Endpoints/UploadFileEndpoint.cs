@@ -30,6 +30,7 @@ internal sealed class UploadFileEndpoint : IEndpoint
             .Accepts<IFormFile>("multipart/form-data")
             .Produces<UploadFileResult>(200)
             .Produces(400)
+            .DisableAntiforgery()
             .WithTags(Tags.Tags.Files);
     }
 }
