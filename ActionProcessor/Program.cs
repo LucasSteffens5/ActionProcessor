@@ -44,7 +44,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 // Database
 builder.Services.AddDbContext<ActionProcessorDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 
 // Repositories
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();

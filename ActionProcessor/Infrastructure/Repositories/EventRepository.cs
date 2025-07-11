@@ -31,12 +31,12 @@ public class EventRepository(ActionProcessorDbContext context) : IEventRepositor
         => await context.ProcessingEvents
             .FromSqlRaw($"""
                          
-                                         SELECT * FROM "ProcessingEvents" 
-                                         WHERE "Status" = 0 
-                                         ORDER BY "CreatedAt" 
-                                         LIMIT {EventStatus.Pending.GetHashCode()} 
+                                         SELECT * FROM "processing_events" 
+                                         WHERE "status" = 0 
+                                         ORDER BY "created_at" 
+                                         LIMIT {limit} 
                                          FOR UPDATE SKIP LOCKED
-                         """, limit)
+                         """)
             .ToListAsync(cancellationToken);
 
 
