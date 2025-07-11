@@ -68,7 +68,7 @@ builder.Services.AddHttpClient<SampleActionHandler>(client =>
 });
 
 // Background Services
-builder.Services.AddHostedService<EventProcessorService>();
+// builder.Services.AddHostedService<EventProcessorService>();
 
 // Register endpoints
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
@@ -106,18 +106,18 @@ app.UseSerilogRequestLogging();
 // Map endpoints
 app.MapEndpoints();
 
-// Ensure database is created
+// Apply database migrations
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ActionProcessorDbContext>();
     try
     {
-        await context.Database.EnsureCreatedAsync();
-        Log.Information("Database connection verified successfully");
+        await context.Database.MigrateAsync();
+        Log.Information("Database migrations applied successfully");
     }
     catch (Exception ex)
     {
-        Log.Warning("Database connection failed (this is normal in development without PostgreSQL): {Error}", ex.Message);
+        Log.Warning("Database migration failed (this is normal in development without PostgreSQL): {Error}", ex.Message);
         // Continue execution - the app can start without DB for API documentation
     }
 }
