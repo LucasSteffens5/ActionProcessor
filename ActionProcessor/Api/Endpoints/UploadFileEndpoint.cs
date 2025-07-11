@@ -14,15 +14,15 @@ internal sealed class UploadFileEndpoint : IEndpoint
                 IValidator<UploadFileCommand> validator) =>
             {
                 var command = new UploadFileCommand(file);
-                
+
                 var validationResult = await validator.ValidateAsync(command);
                 if (!validationResult.IsValid)
                 {
                     return Results.BadRequest(validationResult.Errors);
                 }
-                
+
                 var result = await commandHandler.HandleAsync(command);
-                
+
                 return result.Success ? Results.Ok(result) : Results.BadRequest(result);
             })
             .WithName("UploadFile")

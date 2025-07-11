@@ -10,13 +10,13 @@ public class UploadFileCommandValidator : AbstractValidator<UploadFileCommand>
         RuleFor(x => x.File)
             .NotNull()
             .WithMessage("File is required");
-        
+
         RuleFor(x => x.File.Length)
             .GreaterThan(0)
             .WithMessage("File cannot be empty")
             .LessThanOrEqualTo(100 * 1024 * 1024) // 100MB limit
             .WithMessage("File size cannot exceed 100MB");
-        
+
         RuleFor(x => x.File.FileName)
             .NotEmpty()
             .WithMessage("File name is required")

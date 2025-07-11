@@ -3,33 +3,23 @@ using ActionProcessor.Domain.Interfaces;
 
 namespace ActionProcessor.Application.Handlers;
 
-public class FileQueryHandler
+public class FileQueryHandler(
+    IBatchRepository batchRepository,
+    IEventRepository eventRepository,
+    ILogger<FileQueryHandler> logger)
 {
-    private readonly IBatchRepository _batchRepository;
-    private readonly IEventRepository _eventRepository;
-    private readonly ILogger<FileQueryHandler> _logger;
-    
-    public FileQueryHandler(
-        IBatchRepository batchRepository,
-        IEventRepository eventRepository,
-        ILogger<FileQueryHandler> logger)
-    {
-        _batchRepository = batchRepository;
-        _eventRepository = eventRepository;
-        _logger = logger;
-    }
-    
+    // TODO: Separar a lógica de consulta de status de lote, lista de lotes e eventos falhados em serviços separados
     public async Task<GetBatchStatusResult?> HandleAsync(GetBatchStatusQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var batch = await _batchRepository.GetByIdAsync(query.BatchId, cancellationToken);
-            
+            var batch = await batchRepository.GetByIdAsync(query.BatchId, cancellationToken);
+
             if (batch == null)
                 return null;
-            
+
             var progress = batch.GetProgress();
-            
+
             return new GetBatchStatusResult(
                 progress.BatchId,
                 batch.OriginalFileName,
@@ -47,17 +37,17 @@ public class FileQueryHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting batch status: {BatchId}", query.BatchId);
+            logger.LogError(ex, "Error getting batch status: {BatchId}", query.BatchId);
             return null;
         }
     }
-    
+
     public async Task<GetBatchListResult> HandleAsync(GetBatchListQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var batches = await _batchRepository.GetAllAsync(query.Skip, query.Take, cancellationToken);
-            
+            var batches = await batchRepository.GetAllAsync(query.Skip, query.Take, cancellationToken);
+
             var batchSummaries = batches.Select(batch =>
             {
                 var progress = batch.GetProgress();
@@ -70,22 +60,22 @@ public class FileQueryHandler
                     batch.CreatedAt
                 );
             });
-            
+
             return new GetBatchListResult(batchSummaries);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting batch list");
+            logger.LogError(ex, "Error getting batch list");
             return new GetBatchListResult(Enumerable.Empty<BatchSummary>());
         }
     }
-    
+
     public async Task<GetFailedEventsResult> HandleAsync(GetFailedEventsQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var failedEvents = await _eventRepository.GetFailedEventsAsync(query.BatchId, cancellationToken);
-            
+            var failedEvents = await eventRepository.GetFailedEventsAsync(query.BatchId, cancellationToken);
+
             var failedEventSummaries = failedEvents.Select(evt => new FailedEventSummary(
                 evt.Id,
                 evt.BatchId,
@@ -96,12 +86,12 @@ public class FileQueryHandler
                 evt.RetryCount,
                 evt.CompletedAt ?? evt.CreatedAt
             ));
-            
+
             return new GetFailedEventsResult(failedEventSummaries);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting failed events");
+            logger.LogError(ex, "Error getting failed events");
             return new GetFailedEventsResult(Enumerable.Empty<FailedEventSummary>());
         }
     }

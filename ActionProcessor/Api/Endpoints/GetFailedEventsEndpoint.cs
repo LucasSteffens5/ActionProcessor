@@ -13,7 +13,7 @@ internal sealed class GetFailedEventsEndpoint : IEndpoint
             {
                 var query = new GetFailedEventsQuery(batchId);
                 var result = await queryHandler.HandleAsync(query);
-                
+
                 return Results.Ok(result);
             })
             .WithName("GetFailedEvents")

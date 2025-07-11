@@ -28,8 +28,9 @@ builder.Host.UseSerilog();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { 
-        Title = "Action Processor API", 
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "Action Processor API",
         Version = "v1",
         Description = "API for batch processing of actions with external system integration"
     });
@@ -109,7 +110,7 @@ app.MapEndpoints();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ActionProcessorDbContext>();
-    try 
+    try
     {
         await context.Database.EnsureCreatedAsync();
         Log.Information("Database connection verified successfully");

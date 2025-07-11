@@ -13,12 +13,12 @@ internal sealed class GetBatchStatusEndpoint : IEndpoint
             {
                 var query = new GetBatchStatusQuery(batchId);
                 var result = await queryHandler.HandleAsync(query);
-                
+
                 if (result == null)
                 {
                     return Results.NotFound($"Batch {batchId} not found");
                 }
-                
+
                 return Results.Ok(result);
             })
             .WithName("GetBatchStatus")

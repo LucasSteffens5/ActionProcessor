@@ -14,7 +14,7 @@ internal sealed class GetBatchesEndpoint : IEndpoint
             {
                 var query = new GetBatchListQuery(skip, take);
                 var result = await queryHandler.HandleAsync(query);
-                
+
                 return Results.Ok(result);
             })
             .WithName("GetBatches")

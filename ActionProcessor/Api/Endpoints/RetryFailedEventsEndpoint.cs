@@ -14,7 +14,7 @@ internal sealed class RetryFailedEventsEndpoint : IEndpoint
             {
                 var command = new RetryFailedEventsCommand(batchId, eventIds);
                 var result = await commandHandler.HandleAsync(command);
-                
+
                 return result.Success ? Results.Ok(result) : Results.BadRequest(result);
             })
             .WithName("RetryFailedEvents")
