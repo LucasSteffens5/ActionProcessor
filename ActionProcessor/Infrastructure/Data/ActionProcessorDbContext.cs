@@ -14,13 +14,12 @@ public class ActionProcessorDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // BatchUpload configuration
         modelBuilder.Entity<BatchUpload>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.FileName).IsRequired().HasMaxLength(500);
             entity.Property(e => e.OriginalFileName).IsRequired().HasMaxLength(500);
-            entity.Property(e => e.Status).HasConversion<int>();
+            entity.Property(e => e.Status);
             entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.Status);
@@ -30,8 +29,7 @@ public class ActionProcessorDbContext : DbContext
                 .HasForeignKey(e => e.BatchId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
-
-        // ProcessingEvent configuration
+        
         modelBuilder.Entity<ProcessingEvent>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -39,11 +37,10 @@ public class ActionProcessorDbContext : DbContext
             entity.Property(e => e.ClientIdentifier).IsRequired().HasMaxLength(100);
             entity.Property(e => e.ActionType).IsRequired().HasMaxLength(100);
             entity.Property(e => e.SideEffectsJson).IsRequired();
-            entity.Property(e => e.Status).HasConversion<int>();
+            entity.Property(e => e.Status);
             entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
             entity.Property(e => e.ResponseData).HasMaxLength(4000);
-
-            // Indexes for efficient querying
+            
             entity.HasIndex(e => new { e.Status, e.CreatedAt });
             entity.HasIndex(e => e.BatchId);
             entity.HasIndex(e => e.ActionType);
