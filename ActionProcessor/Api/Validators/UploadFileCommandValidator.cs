@@ -1,5 +1,6 @@
 using ActionProcessor.Application.Commands;
 using FluentValidation;
+using System.Text.Json;
 
 namespace ActionProcessor.Api.Validators;
 
@@ -22,5 +23,25 @@ public class UploadFileCommandValidator : AbstractValidator<UploadFileCommand>
             .WithMessage("File name is required")
             .Must(fileName => Path.GetExtension(fileName)?.ToLower() is ".csv" or ".txt")
             .WithMessage("Only CSV and TXT files are supported");
+
+        RuleFor(x => x.SideEffects)
+            .Must(BeValidJsonWhenProvided)
+            .WithMessage("SideEffects must be valid JSON when provided");
+    }
+
+    private static bool BeValidJsonWhenProvided(string? sideEffects)
+    {
+        if (string.IsNullOrWhiteSpace(sideEffects))
+            return true;
+
+        try
+        {
+            JsonDocument.Parse(sideEffects);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

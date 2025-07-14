@@ -47,7 +47,7 @@ public class FileCommandHandler(
                         eventData.Document,
                         eventData.ClientIdentifier,
                         eventData.ActionType,
-                        eventData.SerializeSideEffects()
+                        command.SideEffects ?? "{}"
                     );
 
                     events.Add(processingEvent);

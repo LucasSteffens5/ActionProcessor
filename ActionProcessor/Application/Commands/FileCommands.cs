@@ -1,7 +1,8 @@
 namespace ActionProcessor.Application.Commands;
 
 public record UploadFileCommand(
-    IFormFile File
+    IFormFile File,
+    string? SideEffects = null
 );
 
 public record UploadFileResult(
