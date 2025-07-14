@@ -3,9 +3,9 @@ using ActionProcessor.Domain.Interfaces;
 
 namespace ActionProcessor.Application.Handlers;
 
-public class RetryFailedCommandHandler(
+public class RetryEventsFailedCommandHandler(
     IEventRepository eventRepository,
-    ILogger<RetryFailedCommandHandler> logger)
+    ILogger<RetryEventsFailedCommandHandler> logger)
 {
     public async Task<RetryFailedEventsResult> HandleAsync(RetryFailedEventsCommand command, CancellationToken cancellationToken = default)
     {

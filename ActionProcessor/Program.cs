@@ -53,7 +53,7 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 
 // Application Services
 builder.Services.AddScoped<FileCommandHandler>();
-builder.Services.AddScoped<RetryFailedCommandHandler>();
+builder.Services.AddScoped<RetryEventsFailedCommandHandler>();
 builder.Services.AddScoped<FileQueryHandler>();
 
 // Validators

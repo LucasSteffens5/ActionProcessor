@@ -10,18 +10,18 @@ using Xunit;
 
 namespace ActionProcessor.Tests.Application.Handlers;
 
-public class RetryFailedCommandHandlerTests
+public class RetryEventsFailedCommandHandlerTests
 {
     private readonly IEventRepository _eventRepository;
-    private readonly ILogger<RetryFailedCommandHandler> _logger;
-    private readonly RetryFailedCommandHandler _handler;
+    private readonly ILogger<RetryEventsFailedCommandHandler> _logger;
+    private readonly RetryEventsFailedCommandHandler _handler;
 
-    public RetryFailedCommandHandlerTests()
+    public RetryEventsFailedCommandHandlerTests()
     {
         _eventRepository = Substitute.For<IEventRepository>();
-        _logger = Substitute.For<ILogger<RetryFailedCommandHandler>>();
+        _logger = Substitute.For<ILogger<RetryEventsFailedCommandHandler>>();
 
-        _handler = new RetryFailedCommandHandler(
+        _handler = new RetryEventsFailedCommandHandler(
             _eventRepository,
             _logger);
     }

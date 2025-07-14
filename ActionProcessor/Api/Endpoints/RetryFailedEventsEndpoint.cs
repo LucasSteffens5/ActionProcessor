@@ -9,7 +9,7 @@ internal sealed class RetryFailedEventsEndpoint : IEndpoint
     {
         app.MapPost("api/files/batches/{batchId:guid}/retry", async (
                 Guid batchId,
-                RetryFailedCommandHandler commandHandler,
+                RetryEventsFailedCommandHandler commandHandler,
                 Guid[]? eventIds = null) =>
             {
                 var command = new RetryFailedEventsCommand(batchId, eventIds);
