@@ -84,7 +84,7 @@ public class EventProcessorService(
                 processingEvent.Document,
                 processingEvent.ClientIdentifier,
                 processingEvent.ActionType,
-                EventData.DeserializeSideEffects(processingEvent.SideEffectsJson)
+                processingEvent.SideEffectsJson
             );
 
             // Execute action

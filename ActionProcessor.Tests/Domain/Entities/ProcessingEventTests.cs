@@ -177,15 +177,21 @@ public class ProcessingEventTests
         var evt = new ProcessingEvent(Guid.NewGuid(), "123", "client1", "ACTION");
         evt.Start();
 
-        // Set retry count through multiple failures
+        // Simulate retries - the retryCount represents how many times the event has failed
         for (int i = 0; i < retryCount; i++)
         {
             evt.Fail("Test error");
-            if (i < retryCount - 1)
+            if (i < retryCount - 1) // Don't reset on the last failure
             {
                 evt.ResetForRetry();
                 evt.Start();
             }
+        }
+
+        // If retryCount is 0, we need at least one failure to test CanRetry
+        if (retryCount == 0)
+        {
+            evt.Fail("Test error");
         }
 
         // Act

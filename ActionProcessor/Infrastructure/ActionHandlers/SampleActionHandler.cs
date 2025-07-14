@@ -2,6 +2,7 @@ using ActionProcessor.Domain.Interfaces;
 using ActionProcessor.Domain.ValueObjects;
 using Polly;
 using System.Text.Json;
+using ActionProcessor.Infrastructure.ActionHandlers.SideEffects;
 
 namespace ActionProcessor.Infrastructure.ActionHandlers;
 
@@ -9,14 +10,19 @@ public class SampleActionHandler(HttpClient httpClient, ILogger<SampleActionHand
 {
     public string ActionType => "SAMPLE_ACTION";
 
-    private readonly HttpClient _httpClient = httpClient;
-
     public async Task<ActionResult> ExecuteAsync(EventData eventData, CancellationToken cancellationToken = default)
     {
         try
         {
             logger.LogInformation("Executing SAMPLE_ACTION for document: {Document}, client: {ClientIdentifier}",
                 eventData.Document, eventData.ClientIdentifier);
+            
+            var sideEffects = SampleSideEffects.FromJson(eventData.SideEffectsJson);
+            
+            if (!sideEffects.IsValid())
+            {
+                logger.LogWarning("Invalid or missing SideEffects for document: {Document}", eventData.Document);
+            }
 
             // Example external API call with retry policy
             var retryPolicy = Policy
@@ -33,17 +39,6 @@ public class SampleActionHandler(HttpClient httpClient, ILogger<SampleActionHand
 
             var response = await retryPolicy.ExecuteAsync(async () =>
             {
-                // Simulate external API call
-                var payload = new
-                {
-                    Document = eventData.Document,
-                    ClientIdentifier = eventData.ClientIdentifier,
-                    SideEffects = eventData.SideEffects,
-                    Timestamp = DateTime.UtcNow
-                };
-
-                // For demonstration, we'll just simulate a successful response
-                // In real implementation, this would be an actual HTTP call
                 await Task.Delay(100, cancellationToken); // Simulate network delay
 
                 // Simulate some failures for testing

@@ -10,7 +10,7 @@ public class EventDataTests
     public void Parse_WithValidCsvLine_ShouldCreateCorrectEventData()
     {
         // Arrange
-        var csvLine = "123456789,client1,SAMPLE_ACTION,key1,value1,key2,value2";
+        var csvLine = "123456789,client1,SAMPLE_ACTION";
 
         // Act
         var eventData = EventData.Parse(csvLine);
@@ -19,9 +19,7 @@ public class EventDataTests
         eventData.Document.Should().Be("123456789");
         eventData.ClientIdentifier.Should().Be("client1");
         eventData.ActionType.Should().Be("SAMPLE_ACTION");
-        eventData.SideEffects.Should().HaveCount(2);
-        eventData.SideEffects["key1"].Should().Be("value1");
-        eventData.SideEffects["key2"].Should().Be("value2");
+        eventData.SideEffectsJson.Should().BeNull();
     }
 
     [Fact]
@@ -37,14 +35,14 @@ public class EventDataTests
         eventData.Document.Should().Be("123456789");
         eventData.ClientIdentifier.Should().Be("client1");
         eventData.ActionType.Should().Be("SAMPLE_ACTION");
-        eventData.SideEffects.Should().BeEmpty();
+        eventData.SideEffectsJson.Should().BeNull();
     }
 
     [Fact]
-    public void Parse_WithIncompleteSideEffects_ShouldIgnoreIncompleteKeyValuePairs()
+    public void Parse_WithSpacesInValues_ShouldTrimCorrectly()
     {
         // Arrange
-        var csvLine = "123456789,client1,SAMPLE_ACTION,key1,value1,key2";
+        var csvLine = " 123456789 , client1 , SAMPLE_ACTION ";
 
         // Act
         var eventData = EventData.Parse(csvLine);
@@ -53,9 +51,6 @@ public class EventDataTests
         eventData.Document.Should().Be("123456789");
         eventData.ClientIdentifier.Should().Be("client1");
         eventData.ActionType.Should().Be("SAMPLE_ACTION");
-        eventData.SideEffects.Should().HaveCount(1);
-        eventData.SideEffects["key1"].Should().Be("value1");
-        eventData.SideEffects.Should().NotContainKey("key2");
     }
 
     [Fact]
@@ -79,78 +74,32 @@ public class EventDataTests
     }
 
     [Fact]
-    public void SerializeSideEffects_ShouldReturnValidJsonString()
+    public void Constructor_WithSideEffectsJson_ShouldSetCorrectly()
     {
         // Arrange
-        var sideEffects = new Dictionary<string, object>
-        {
-            ["key1"] = "value1",
-            ["key2"] = 42,
-            ["key3"] = true
-        };
-        var eventData = new EventData("123", "client1", "ACTION", sideEffects);
+        var sideEffectsJson = """{"edipi": 123456789, "firstName": "John"}""";
 
         // Act
-        var json = eventData.SerializeSideEffects();
+        var eventData = new EventData("123", "client1", "ACTION", sideEffectsJson);
 
         // Assert
-        json.Should().NotBeNullOrEmpty();
-        json.Should().Contain("key1");
-        json.Should().Contain("value1");
+        eventData.Document.Should().Be("123");
+        eventData.ClientIdentifier.Should().Be("client1");
+        eventData.ActionType.Should().Be("ACTION");
+        eventData.SideEffectsJson.Should().Be(sideEffectsJson);
     }
 
     [Fact]
-    public void SerializeSideEffects_WithEmptyDictionary_ShouldReturnEmptyJsonObject()
+    public void Constructor_WithoutSideEffectsJson_ShouldDefaultToNull()
     {
-        // Arrange
-        var eventData = new EventData("123", "client1", "ACTION", new Dictionary<string, object>());
-
         // Act
-        var json = eventData.SerializeSideEffects();
+        var eventData = new EventData("123", "client1", "ACTION");
 
         // Assert
-        json.Should().Be("{}");
-    }
-
-    [Fact]
-    public void DeserializeSideEffects_WithValidJson_ShouldReturnCorrectDictionary()
-    {
-        // Arrange
-        var json = "{\"key1\":\"value1\",\"key2\":42}";
-
-        // Act
-        var sideEffects = EventData.DeserializeSideEffects(json);
-
-        // Assert
-        sideEffects.Should().HaveCount(2);
-        sideEffects.Should().ContainKey("key1");
-        sideEffects.Should().ContainKey("key2");
-    }
-
-    [Fact]
-    public void DeserializeSideEffects_WithInvalidJson_ShouldReturnEmptyDictionary()
-    {
-        // Arrange
-        var invalidJson = "invalid json";
-
-        // Act
-        var sideEffects = EventData.DeserializeSideEffects(invalidJson);
-
-        // Assert
-        sideEffects.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void DeserializeSideEffects_WithNullJson_ShouldReturnEmptyDictionary()
-    {
-        // Arrange
-        string? nullJson = null;
-
-        // Act
-        var sideEffects = EventData.DeserializeSideEffects(nullJson!);
-
-        // Assert
-        sideEffects.Should().BeEmpty();
+        eventData.Document.Should().Be("123");
+        eventData.ClientIdentifier.Should().Be("client1");
+        eventData.ActionType.Should().Be("ACTION");
+        eventData.SideEffectsJson.Should().BeNull();
     }
 }
 
