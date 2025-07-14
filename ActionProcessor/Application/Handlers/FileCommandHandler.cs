@@ -10,7 +10,6 @@ public class FileCommandHandler(
     IEventRepository eventRepository,
     ILogger<FileCommandHandler> logger)
 {
-    // TODO: Separar a lógica de upload de arquivo em um serviço separado, do retry de eventos falhados
     public async Task<UploadFileResult> HandleAsync(UploadFileCommand command, CancellationToken cancellationToken = default)
     {
         try
@@ -74,7 +73,6 @@ public class FileCommandHandler(
             batch.SetTotalEvents(events.Count);
             await batchRepository.UpdateAsync(batch, cancellationToken);
 
-
             logger.LogInformation("File uploaded successfully. BatchId: {BatchId}, Events: {EventCount}",
                 batch.Id, events.Count);
 
@@ -84,39 +82,6 @@ public class FileCommandHandler(
         {
             logger.LogError(ex, "Error processing file upload: {FileName}", command.File.FileName);
             return new UploadFileResult(Guid.Empty, command.File.FileName ?? "unknown", 0, false, ex.Message);
-        }
-    }
-
-    public async Task<RetryFailedEventsResult> HandleAsync(RetryFailedEventsCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogInformation("Retrying failed events for batch: {BatchId}", command.BatchId);
-
-            var failedEvents = await eventRepository.GetFailedEventsAsync(command.BatchId, cancellationToken);
-
-            if (command.EventIds?.Any() == true)
-            {
-                var eventIds = command.EventIds.ToHashSet();
-                failedEvents = failedEvents.Where(e => eventIds.Contains(e.Id));
-            }
-
-            var eventsToRetry = failedEvents.Where(e => e.CanRetry()).ToList();
-
-            foreach (var eventToRetry in eventsToRetry)
-            {
-                eventToRetry.ResetForRetry();
-                await eventRepository.UpdateAsync(eventToRetry, cancellationToken);
-            }
-
-            logger.LogInformation("Reset {Count} events for retry", eventsToRetry.Count);
-
-            return new RetryFailedEventsResult(eventsToRetry.Count, true);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrying failed events for batch: {BatchId}", command.BatchId);
-            return new RetryFailedEventsResult(0, false, ex.Message);
         }
     }
 }

@@ -6,7 +6,6 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using System.Text;
 using Xunit;
 
@@ -111,83 +110,6 @@ public class FileCommandHandlerTests
             Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task HandleRetryFailedEventsCommand_WithValidBatchId_ShouldRetryFailedEvents()
-    {
-        // Arrange
-        var batchId = Guid.NewGuid();
-        var command = new RetryFailedEventsCommand(batchId);
-
-        var failedEvents = new List<ProcessingEvent>
-        {
-            CreateFailedEvent(batchId, 1),
-            CreateFailedEvent(batchId, 2),
-            CreateFailedEvent(batchId, 5) // This one has too many retries
-        };
-
-        _eventRepository.GetFailedEventsAsync(batchId, Arg.Any<CancellationToken>())
-            .Returns(failedEvents);
-
-        // Act
-        var result = await _handler.HandleAsync(command);
-
-        // Assert
-        result.Success.Should().BeTrue();
-        result.EventsRetried.Should().Be(2); // Only events with retryCount < 3
-
-        await _eventRepository.Received(2).UpdateAsync(
-            Arg.Is<ProcessingEvent>(e => e.Status == EventStatus.Pending),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task HandleRetryFailedEventsCommand_WithSpecificEventIds_ShouldRetryOnlySpecifiedEvents()
-    {
-        // Arrange
-        var batchId = Guid.NewGuid();
-        var event1 = CreateFailedEvent(batchId, 1);
-        var event2 = CreateFailedEvent(batchId, 1);
-        var event3 = CreateFailedEvent(batchId, 1);
-
-        var eventIds = new[] { event1.Id, event3.Id };
-        var command = new RetryFailedEventsCommand(batchId, eventIds);
-
-        var failedEvents = new List<ProcessingEvent> { event1, event2, event3 };
-
-        _eventRepository.GetFailedEventsAsync(batchId, Arg.Any<CancellationToken>())
-            .Returns(failedEvents);
-
-        // Act
-        var result = await _handler.HandleAsync(command);
-
-        // Assert
-        result.Success.Should().BeTrue();
-        result.EventsRetried.Should().Be(2); // Only event1 and event3
-
-        await _eventRepository.Received(2).UpdateAsync(
-            Arg.Is<ProcessingEvent>(e => eventIds.Contains(e.Id) && e.Status == EventStatus.Pending),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task HandleRetryFailedEventsCommand_WhenRepositoryThrows_ShouldReturnFailureResult()
-    {
-        // Arrange
-        var batchId = Guid.NewGuid();
-        var command = new RetryFailedEventsCommand(batchId);
-
-        _eventRepository.GetFailedEventsAsync(batchId, Arg.Any<CancellationToken>())
-            .ThrowsAsync(new Exception("Database error"));
-
-        // Act
-        var result = await _handler.HandleAsync(command);
-
-        // Assert
-        result.Success.Should().BeFalse();
-        result.EventsRetried.Should().Be(0);
-        result.ErrorMessage.Should().Contain("Database error");
-    }
-
     private static IFormFile CreateMockFormFile(string fileName, string content)
     {
         var file = Substitute.For<IFormFile>();
@@ -198,20 +120,5 @@ public class FileCommandHandlerTests
         file.OpenReadStream().Returns(stream);
 
         return file;
-    }
-
-    private static ProcessingEvent CreateFailedEvent(Guid batchId, int retryCount)
-    {
-        var evt = new ProcessingEvent(batchId, "123456789", "client1", "SAMPLE_ACTION");
-
-        // Use reflection to set the event to failed state with specific retry count
-        evt.Start();
-        evt.Fail("Test error");
-
-        var retryCountField = typeof(ProcessingEvent).GetField("<RetryCount>k__BackingField",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        retryCountField?.SetValue(evt, retryCount);
-
-        return evt;
     }
 }
