@@ -9,7 +9,7 @@ internal sealed class GetBatchStatusEndpoint : IEndpoint
     {
         app.MapGet("api/files/batches/{batchId:guid}", async (
                 Guid batchId,
-                FileQueryHandler queryHandler) =>
+                GetBatchStatusQueryHandler queryHandler) =>
             {
                 var query = new GetBatchStatusQuery(batchId);
                 var result = await queryHandler.HandleAsync(query);

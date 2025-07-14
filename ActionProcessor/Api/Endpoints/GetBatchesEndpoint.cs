@@ -8,7 +8,7 @@ internal sealed class GetBatchesEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("api/files/batches", async (
-                FileQueryHandler queryHandler,
+                GetBatchListQueryHandler queryHandler,
                 int skip = 0,
                 int take = 100) =>
             {

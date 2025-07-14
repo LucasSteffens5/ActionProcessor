@@ -9,7 +9,7 @@ internal sealed class GetFailedEventsEndpoint : IEndpoint
     {
         app.MapGet("api/files/batches/{batchId:guid}/failed-events", async (
                 Guid batchId,
-                FileQueryHandler queryHandler) =>
+                GetFailedEventsQueryHandler queryHandler) =>
             {
                 var query = new GetFailedEventsQuery(batchId);
                 var result = await queryHandler.HandleAsync(query);

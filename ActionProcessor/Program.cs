@@ -54,7 +54,9 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 // Application Services
 builder.Services.AddScoped<FileCommandHandler>();
 builder.Services.AddScoped<RetryEventsFailedCommandHandler>();
-builder.Services.AddScoped<FileQueryHandler>();
+builder.Services.AddScoped<GetBatchStatusQueryHandler>();
+builder.Services.AddScoped<GetBatchListQueryHandler>();
+builder.Services.AddScoped<GetFailedEventsQueryHandler>();
 
 // Validators
 builder.Services.AddValidatorsFromAssemblyContaining<UploadFileCommandValidator>();
