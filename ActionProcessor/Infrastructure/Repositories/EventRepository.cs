@@ -29,14 +29,14 @@ public class EventRepository(ActionProcessorDbContext context) : IEventRepositor
     public async Task<IEnumerable<ProcessingEvent>> GetPendingEventsAsync(int limit = 10,
         CancellationToken cancellationToken = default)
         => await context.ProcessingEvents
-            .FromSqlRaw($"""
-                         
-                                         SELECT * FROM "processing_events" 
-                                         WHERE "status" = 0 
-                                         ORDER BY "created_at" 
-                                         LIMIT {limit} 
-                                         FOR UPDATE SKIP LOCKED
-                         """)
+            .FromSql($"""
+                      
+                                      SELECT * FROM "processing_events" 
+                                      WHERE "status" = 0 
+                                      ORDER BY "created_at" 
+                                      LIMIT {limit} 
+                                      FOR UPDATE SKIP LOCKED
+                      """)
             .ToListAsync(cancellationToken);
 
 
