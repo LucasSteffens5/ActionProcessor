@@ -66,7 +66,7 @@ builder.Services.AddScoped<IActionHandlerFactory, ActionHandlerFactory>();
 builder.Services.AddHttpClient<SampleActionHandler>(client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // Background Services
-// builder.Services.AddHostedService<EventProcessorService>();
+builder.Services.AddHostedService<EventProcessorService>();
 
 // Register endpoints
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
