@@ -9,6 +9,8 @@ using ActionProcessor.Infrastructure.Repositories;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Reflection;
+using ActionProcessor.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,8 +28,9 @@ builder.Host.UseSerilog();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { 
-        Title = "Action Processor API", 
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "Action Processor API",
         Version = "v1",
         Description = "API for batch processing of actions with external system integration"
     });
@@ -41,7 +44,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 // Database
 builder.Services.AddDbContext<ActionProcessorDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .UseSnakeCaseNamingConvention());
 
 // Repositories
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();
@@ -49,7 +53,10 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 
 // Application Services
 builder.Services.AddScoped<FileCommandHandler>();
-builder.Services.AddScoped<FileQueryHandler>();
+builder.Services.AddScoped<RetryEventsFailedCommandHandler>();
+builder.Services.AddScoped<GetBatchStatusQueryHandler>();
+builder.Services.AddScoped<GetBatchListQueryHandler>();
+builder.Services.AddScoped<GetFailedEventsQueryHandler>();
 
 // Validators
 builder.Services.AddValidatorsFromAssemblyContaining<UploadFileCommandValidator>();
@@ -59,13 +66,13 @@ builder.Services.AddScoped<SampleActionHandler>();
 builder.Services.AddScoped<IActionHandlerFactory, ActionHandlerFactory>();
 
 // HTTP Client for external API calls
-builder.Services.AddHttpClient<SampleActionHandler>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+builder.Services.AddHttpClient<SampleActionHandler>(client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // Background Services
 builder.Services.AddHostedService<EventProcessorService>();
+
+// Register endpoints
+builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 
 // CORS (if needed for frontend)
 builder.Services.AddCors(options =>
@@ -73,8 +80,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
@@ -87,7 +94,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Action Processor API v1");
-        c.RoutePrefix = string.Empty; // Serve Swagger UI at root
+        c.RoutePrefix = "swagger";
     });
 }
 
@@ -98,33 +105,10 @@ app.UseCors("AllowAll");
 app.UseSerilogRequestLogging();
 
 // Map endpoints
-app.MapFileEndpoints();
+app.MapEndpoints();
 
-// Health check endpoint
-app.MapGet("/health", () => new { 
-    Status = "Healthy", 
-    Timestamp = DateTime.UtcNow,
-    Version = "1.0.0"
-})
-.WithName("HealthCheck")
-.WithSummary("Health check endpoint")
-.WithTags("Health");
-
-// Ensure database is created
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ActionProcessorDbContext>();
-    try 
-    {
-        await context.Database.EnsureCreatedAsync();
-        Log.Information("Database connection verified successfully");
-    }
-    catch (Exception ex)
-    {
-        Log.Warning("Database connection failed (this is normal in development without PostgreSQL): {Error}", ex.Message);
-        // Continue execution - the app can start without DB for API documentation
-    }
-}
+// Apply database migrations
+await MigrateAsync(app);
 
 try
 {
@@ -138,4 +122,12 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+async Task MigrateAsync(WebApplication webApplication)
+{
+    using var scope = webApplication.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ActionProcessorDbContext>();
+    await context.Database.MigrateAsync();
+    Log.Information("Database migrations applied successfully");
 }

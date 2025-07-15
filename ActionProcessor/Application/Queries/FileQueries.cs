@@ -36,7 +36,7 @@ public record BatchSummary(
 );
 
 public record GetFailedEventsQuery(
-    Guid? BatchId = null
+    Guid BatchId
 );
 
 public record GetFailedEventsResult(
