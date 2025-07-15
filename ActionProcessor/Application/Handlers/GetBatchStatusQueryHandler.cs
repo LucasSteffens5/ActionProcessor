@@ -21,6 +21,7 @@ public class GetBatchStatusQueryHandler(
             return new GetBatchStatusResult(
                 progress.BatchId,
                 batch.OriginalFileName,
+                batch.UserEmail,
                 progress.Status.ToString(),
                 progress.TotalEvents,
                 progress.ProcessedEvents,

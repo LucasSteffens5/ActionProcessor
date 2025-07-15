@@ -32,7 +32,7 @@ public class GetBatchStatusQueryHandlerTests
         var batchId = Guid.NewGuid();
         var query = new GetBatchStatusQuery(batchId);
 
-        var batch = new BatchUpload("test-file.csv", "original-test.csv", 1000);
+        var batch = new BatchUpload("test-file.csv", "original-test.csv", 1000, "test@example.com");
         batch.SetTotalEvents(10);
 
         _batchRepository.GetByIdAsync(batchId, Arg.Any<CancellationToken>())

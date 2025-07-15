@@ -19,10 +19,13 @@ public class ActionProcessorDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.FileName).IsRequired().HasMaxLength(500);
             entity.Property(e => e.OriginalFileName).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.UserEmail).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Status);
             entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.UserEmail);
+            entity.HasIndex(e => new { e.UserEmail, e.CreatedAt });
 
             entity.HasMany(e => e.Events)
                 .WithOne(e => e.Batch)

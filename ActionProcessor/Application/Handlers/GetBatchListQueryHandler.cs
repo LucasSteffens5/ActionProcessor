@@ -1,4 +1,5 @@
 using ActionProcessor.Application.Queries;
+using ActionProcessor.Domain.Entities;
 using ActionProcessor.Domain.Interfaces;
 
 namespace ActionProcessor.Application.Handlers;
@@ -11,7 +12,16 @@ public class GetBatchListQueryHandler(
     {
         try
         {
-            var batches = await batchRepository.GetAllAsync(query.Skip, query.Take, cancellationToken);
+            IEnumerable<BatchUpload> batches;
+            
+            if (!string.IsNullOrWhiteSpace(query.UserEmail))
+            {
+                batches = await batchRepository.GetByEmailAsync(query.UserEmail, query.Skip, query.Take, cancellationToken);
+            }
+            else
+            {
+                batches = await batchRepository.GetAllAsync(query.Skip, query.Take, cancellationToken);
+            }
 
             var batchSummaries = batches.Select(batch =>
             {
@@ -19,6 +29,7 @@ public class GetBatchListQueryHandler(
                 return new BatchSummary(
                     batch.Id,
                     batch.OriginalFileName,
+                    batch.UserEmail,
                     batch.Status.ToString(),
                     progress.TotalEvents,
                     progress.PercentageComplete,

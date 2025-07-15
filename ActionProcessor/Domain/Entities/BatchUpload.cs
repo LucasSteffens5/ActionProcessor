@@ -6,6 +6,7 @@ public class BatchUpload
     public string FileName { get; private set; } = string.Empty;
     public string OriginalFileName { get; private set; } = string.Empty;
     public long FileSizeBytes { get; private set; }
+    public string UserEmail { get; private set; } = string.Empty;
     public int TotalEvents { get; private set; }
     public BatchStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -16,14 +17,17 @@ public class BatchUpload
     // Navigation properties
     public ICollection<ProcessingEvent> Events { get; private set; } = new List<ProcessingEvent>();
 
-    private BatchUpload() { } // EF Constructor
+    private BatchUpload()
+    {
+    } // EF Constructor
 
-    public BatchUpload(string fileName, string originalFileName, long fileSizeBytes)
+    public BatchUpload(string fileName, string originalFileName, long fileSizeBytes, string userEmail)
     {
         Id = Guid.NewGuid();
         FileName = fileName;
         OriginalFileName = originalFileName;
         FileSizeBytes = fileSizeBytes;
+        UserEmail = userEmail;
         Status = BatchStatus.Uploaded;
         CreatedAt = DateTime.UtcNow;
     }
@@ -58,9 +62,15 @@ public class BatchUpload
         TotalEvents = totalEvents;
     }
 
+    public bool IsActive()
+        => Status is BatchStatus.Uploaded or BatchStatus.Processing;
+
+    public bool HasPendingEvents()
+        => Events.Any(e => e.Status is EventStatus.Pending or EventStatus.Processing);
+
     public BatchProgress GetProgress()
     {
-        var processedCount = Events.Count(e => e.Status == EventStatus.Completed || e.Status == EventStatus.Failed);
+        var processedCount = Events.Count(e => e.Status is EventStatus.Completed or EventStatus.Failed);
         var successCount = Events.Count(e => e.Status == EventStatus.Completed);
         var failedCount = Events.Count(e => e.Status == EventStatus.Failed);
 
