@@ -1,7 +1,8 @@
 namespace ActionProcessor.Application.Commands;
-
+// TODO: Separar os commands
 public record UploadFileCommand(
     IFormFile File,
+    string UserEmail,
     string? SideEffects = null
 );
 
@@ -15,7 +16,8 @@ public record UploadFileResult(
 
 public record RetryFailedEventsCommand(
     Guid BatchId,
-    IEnumerable<Guid>? EventIds = null
+    IEnumerable<Guid>? EventIds = null,
+    string? UserEmail = null
 );
 
 public record RetryFailedEventsResult(

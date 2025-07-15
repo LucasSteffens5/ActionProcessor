@@ -19,7 +19,8 @@ public class FileCommandHandler(
             var batch = new BatchUpload(
                 fileName: Guid.NewGuid().ToString(),
                 originalFileName: command.File.FileName ?? "Unknown",
-                fileSizeBytes: command.File.Length
+                fileSizeBytes: command.File.Length,
+                userEmail: command.UserEmail
             );
 
             // TODO: Enviar para um bucket ou armazenamento de arquivos

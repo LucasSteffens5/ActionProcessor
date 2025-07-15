@@ -10,9 +10,10 @@ internal sealed class RetryFailedEventsEndpoint : IEndpoint
         app.MapPost("api/files/batches/{batchId:guid}/retry", async (
                 Guid batchId,
                 RetryEventsFailedCommandHandler commandHandler,
-                Guid[]? eventIds = null) =>
+                Guid[]? eventIds = null,
+                string? userEmail = null) =>
             {
-                var command = new RetryFailedEventsCommand(batchId, eventIds);
+                var command = new RetryFailedEventsCommand(batchId, eventIds, userEmail);
                 var result = await commandHandler.HandleAsync(command);
 
                 return result.Success ? Results.Ok(result) : Results.BadRequest(result);

@@ -1,10 +1,12 @@
 using ActionProcessor.Application.Commands;
+using ActionProcessor.Domain.Entities;
 using ActionProcessor.Domain.Interfaces;
 
 namespace ActionProcessor.Application.Handlers;
 
 public class RetryEventsFailedCommandHandler(
     IEventRepository eventRepository,
+    IBatchRepository batchRepository,
     ILogger<RetryEventsFailedCommandHandler> logger)
 {
     public async Task<RetryFailedEventsResult> HandleAsync(RetryFailedEventsCommand command, CancellationToken cancellationToken = default)
@@ -13,7 +15,21 @@ public class RetryEventsFailedCommandHandler(
         {
             logger.LogInformation("Retrying failed events for batch: {BatchId}", command.BatchId);
 
-            var failedEvents = await eventRepository.GetFailedEventsAsync(command.BatchId, cancellationToken);
+            IEnumerable<ProcessingEvent> failedEvents;
+
+            //TODO: Melhorar esta logica de busca para retry
+            if (!string.IsNullOrWhiteSpace(command.UserEmail))
+            {
+                var batch = await batchRepository.GetByIdAsync(command.BatchId, cancellationToken);
+                if (batch == null || batch.UserEmail != command.UserEmail)
+                {
+                    logger.LogWarning("Batch {BatchId} not found or does not belong to user {UserEmail}", 
+                        command.BatchId, command.UserEmail);
+                    return new RetryFailedEventsResult(0, false, "Batch not found or access denied");
+                }
+            }
+
+            failedEvents = await eventRepository.GetFailedEventsAsync(command.BatchId, cancellationToken);
 
             if (command.EventIds?.Any() == true)
             {

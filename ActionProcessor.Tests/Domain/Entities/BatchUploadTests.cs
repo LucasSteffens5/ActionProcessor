@@ -13,15 +13,17 @@ public class BatchUploadTests
         var fileName = "test-file";
         var originalFileName = "test.csv";
         var fileSizeBytes = 1024L;
+        var userEmail = "test@example.com";
 
         // Act
-        var batch = new BatchUpload(fileName, originalFileName, fileSizeBytes);
+        var batch = new BatchUpload(fileName, originalFileName, fileSizeBytes, userEmail);
 
         // Assert
         batch.Id.Should().NotBeEmpty();
         batch.FileName.Should().Be(fileName);
         batch.OriginalFileName.Should().Be(originalFileName);
         batch.FileSizeBytes.Should().Be(fileSizeBytes);
+        batch.UserEmail.Should().Be(userEmail);
         batch.Status.Should().Be(BatchStatus.Uploaded);
         batch.TotalEvents.Should().Be(0);
         batch.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
@@ -34,7 +36,7 @@ public class BatchUploadTests
     public void Start_WhenStatusIsUploaded_ShouldChangeStatusToProcessing()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
 
         // Act
         batch.Start();
@@ -48,7 +50,7 @@ public class BatchUploadTests
     public void Start_WhenStatusIsNotUploaded_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
         batch.Start(); // Set to Processing
 
         // Act & Assert
@@ -59,7 +61,7 @@ public class BatchUploadTests
     public void Complete_WhenStatusIsProcessing_ShouldChangeStatusToCompleted()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
         batch.Start();
 
         // Act
@@ -74,7 +76,7 @@ public class BatchUploadTests
     public void Complete_WhenStatusIsNotProcessing_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => batch.Complete());
@@ -84,7 +86,7 @@ public class BatchUploadTests
     public void Fail_ShouldSetStatusToFailedAndSetErrorMessage()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
         var errorMessage = "Something went wrong";
 
         // Act
@@ -100,7 +102,7 @@ public class BatchUploadTests
     public void SetTotalEvents_ShouldUpdateTotalEventsCount()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
         var totalEvents = 100;
 
         // Act
@@ -114,7 +116,7 @@ public class BatchUploadTests
     public void GetProgress_WithNoEvents_ShouldReturnZeroProgress()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
         batch.SetTotalEvents(10);
 
         // Act
@@ -132,7 +134,7 @@ public class BatchUploadTests
     public void GetProgress_WithMixedEvents_ShouldCalculateCorrectPercentage()
     {
         // Arrange
-        var batch = new BatchUpload("test", "test.csv", 1024);
+        var batch = new BatchUpload("test", "test.csv", 1024, "test@example.com");
         batch.SetTotalEvents(4);
 
         // Add some mock events through reflection for testing

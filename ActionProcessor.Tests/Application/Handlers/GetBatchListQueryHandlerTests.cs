@@ -33,8 +33,8 @@ public class GetBatchListQueryHandlerTests
 
         var batches = new List<BatchUpload>
         {
-            new("file1.csv", "original1.csv", 1000),
-            new("file2.csv", "original2.csv", 2000)
+            new("file1.csv", "original1.csv", 1000, "user1@example.com"),
+            new("file2.csv", "original2.csv", 2000, "user2@example.com")
         };
 
         _batchRepository.GetAllAsync(0, 10, Arg.Any<CancellationToken>())

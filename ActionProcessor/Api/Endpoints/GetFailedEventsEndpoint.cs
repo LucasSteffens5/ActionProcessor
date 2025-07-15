@@ -20,5 +20,20 @@ internal sealed class GetFailedEventsEndpoint : IEndpoint
             .WithSummary("Get failed events for a batch")
             .Produces<GetFailedEventsResult>(200)
             .WithTags(Tags.Tags.Files);
+
+        // TODO: Criar um arquivo para este endpoint de forma separada
+        app.MapGet("api/files/failed-events", async (
+                GetFailedEventsQueryHandler queryHandler,
+                string? userEmail = null) =>
+            {
+                var query = new GetFailedEventsQuery(null, userEmail);
+                var result = await queryHandler.HandleAsync(query);
+
+                return Results.Ok(result);
+            })
+            .WithName("GetFailedEventsByEmail")
+            .WithSummary("Get failed events by user email")
+            .Produces<GetFailedEventsResult>(200)
+            .WithTags(Tags.Tags.Files);
     }
 }

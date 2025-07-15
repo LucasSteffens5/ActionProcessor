@@ -42,4 +42,14 @@ public class BatchRepository : IBatchRepository
             .Take(take)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<BatchUpload>> GetByEmailAsync(string userEmail, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
+    {
+        return await _context.BatchUploads
+            .Where(b => b.UserEmail == userEmail)
+            .OrderByDescending(b => b.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
 }

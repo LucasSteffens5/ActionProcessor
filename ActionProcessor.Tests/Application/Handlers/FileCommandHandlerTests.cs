@@ -36,7 +36,7 @@ public class FileCommandHandlerTests
         // Arrange
         var fileContent = "123456789,client1,SAMPLE_ACTION\n987654321,client2,SAMPLE_ACTION";
         var file = CreateMockFormFile("test.csv", fileContent);
-        var command = new UploadFileCommand(file);
+        var command = new UploadFileCommand(file, "test@example.com");
 
         _batchRepository.AddAsync(Arg.Any<BatchUpload>(), Arg.Any<CancellationToken>())
             .Returns(args => args.Arg<BatchUpload>());
@@ -65,7 +65,7 @@ public class FileCommandHandlerTests
     {
         // Arrange
         var file = CreateMockFormFile("test.csv", "");
-        var command = new UploadFileCommand(file);
+        var command = new UploadFileCommand(file, "test@example.com");
 
         _batchRepository.AddAsync(Arg.Any<BatchUpload>(), Arg.Any<CancellationToken>())
             .Returns(args => args.Arg<BatchUpload>());
@@ -90,7 +90,7 @@ public class FileCommandHandlerTests
         // Arrange
         var fileContent = "123456789,client1,SAMPLE_ACTION\ninvalid line\n987654321,client2,SAMPLE_ACTION";
         var file = CreateMockFormFile("test.csv", fileContent);
-        var command = new UploadFileCommand(file);
+        var command = new UploadFileCommand(file, "test@example.com");
 
         _batchRepository.AddAsync(Arg.Any<BatchUpload>(), Arg.Any<CancellationToken>())
             .Returns(args => args.Arg<BatchUpload>());

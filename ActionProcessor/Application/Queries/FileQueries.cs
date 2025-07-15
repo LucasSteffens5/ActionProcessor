@@ -1,10 +1,11 @@
 namespace ActionProcessor.Application.Queries;
-
+// TODO: Separar Queries
 public record GetBatchStatusQuery(Guid BatchId);
 
 public record GetBatchStatusResult(
     Guid BatchId,
     string FileName,
+    string UserEmail,
     string Status,
     int TotalEvents,
     int ProcessedEvents,
@@ -19,7 +20,8 @@ public record GetBatchStatusResult(
 
 public record GetBatchListQuery(
     int Skip = 0,
-    int Take = 100
+    int Take = 100,
+    string? UserEmail = null
 );
 
 public record GetBatchListResult(
@@ -29,6 +31,7 @@ public record GetBatchListResult(
 public record BatchSummary(
     Guid BatchId,
     string FileName,
+    string UserEmail,
     string Status,
     int TotalEvents,
     decimal PercentageComplete,
@@ -36,7 +39,8 @@ public record BatchSummary(
 );
 
 public record GetFailedEventsQuery(
-    Guid BatchId
+    Guid? BatchId = null,
+    string? UserEmail = null
 );
 
 public record GetFailedEventsResult(

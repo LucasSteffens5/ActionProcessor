@@ -1,4 +1,5 @@
 using ActionProcessor.Application.Queries;
+using ActionProcessor.Domain.Entities;
 using ActionProcessor.Domain.Interfaces;
 
 namespace ActionProcessor.Application.Handlers;
@@ -11,7 +12,20 @@ public class GetFailedEventsQueryHandler(
     {
         try
         {
-            var failedEvents = await eventRepository.GetFailedEventsAsync(query.BatchId, cancellationToken);
+            IEnumerable<ProcessingEvent> failedEvents;
+            
+            if (!string.IsNullOrWhiteSpace(query.UserEmail))
+            {
+                failedEvents = await eventRepository.GetFailedEventsByEmailAsync(query.UserEmail, cancellationToken);
+            }
+            else if (query.BatchId.HasValue)
+            {
+                failedEvents = await eventRepository.GetFailedEventsAsync(query.BatchId.Value, cancellationToken);
+            }
+            else
+            {
+                failedEvents = await eventRepository.GetFailedEventsAsync(null, cancellationToken);
+            }
 
             var failedEventSummaries = failedEvents.Select(evt => new FailedEventSummary(
                 evt.Id,

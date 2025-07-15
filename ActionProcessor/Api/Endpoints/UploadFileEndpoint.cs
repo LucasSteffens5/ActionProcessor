@@ -10,11 +10,12 @@ internal sealed class UploadFileEndpoint : IEndpoint
     {
         app.MapPost("api/files/upload", async (
                 IFormFile file,
+                string userEmail,
                 FileCommandHandler commandHandler,
                 IValidator<UploadFileCommand> validator,
                 string? sideEffects = null) =>
             {
-                var command = new UploadFileCommand(file, sideEffects);
+                var command = new UploadFileCommand(file, userEmail, sideEffects);
 
                 var validationResult = await validator.ValidateAsync(command);
                 if (!validationResult.IsValid)

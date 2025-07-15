@@ -24,6 +24,14 @@ public class UploadFileCommandValidator : AbstractValidator<UploadFileCommand>
             .Must(fileName => Path.GetExtension(fileName)?.ToLower() is ".csv" or ".txt")
             .WithMessage("Only CSV and TXT files are supported");
 
+        RuleFor(x => x.UserEmail)
+            .NotEmpty()
+            .WithMessage("User email is required")
+            .EmailAddress()
+            .WithMessage("Invalid email format")
+            .MaximumLength(255)
+            .WithMessage("Email cannot exceed 255 characters");
+
         RuleFor(x => x.SideEffects)
             .Must(BeValidJsonWhenProvided)
             .WithMessage("SideEffects must be valid JSON when provided");

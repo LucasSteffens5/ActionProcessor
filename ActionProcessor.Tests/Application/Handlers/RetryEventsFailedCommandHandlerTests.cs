@@ -13,16 +13,19 @@ namespace ActionProcessor.Tests.Application.Handlers;
 public class RetryEventsFailedCommandHandlerTests
 {
     private readonly IEventRepository _eventRepository;
+    private readonly IBatchRepository _batchRepository;
     private readonly ILogger<RetryEventsFailedCommandHandler> _logger;
     private readonly RetryEventsFailedCommandHandler _handler;
 
     public RetryEventsFailedCommandHandlerTests()
     {
         _eventRepository = Substitute.For<IEventRepository>();
+        _batchRepository = Substitute.For<IBatchRepository>();
         _logger = Substitute.For<ILogger<RetryEventsFailedCommandHandler>>();
 
         _handler = new RetryEventsFailedCommandHandler(
             _eventRepository,
+            _batchRepository,
             _logger);
     }
 

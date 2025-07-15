@@ -63,4 +63,13 @@ public class EventRepository(ActionProcessorDbContext context) : IEventRepositor
             .OrderByDescending(e => e.CompletedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<ProcessingEvent>> GetFailedEventsByEmailAsync(string userEmail, CancellationToken cancellationToken = default)
+    {
+        return await context.ProcessingEvents
+            .Include(e => e.Batch)
+            .Where(e => e.Status == EventStatus.Failed && e.Batch.UserEmail == userEmail)
+            .OrderByDescending(e => e.CompletedAt)
+            .ToListAsync(cancellationToken);
+    }
 }
