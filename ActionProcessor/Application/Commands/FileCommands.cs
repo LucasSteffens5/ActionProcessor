@@ -17,7 +17,7 @@ public record UploadFileResult(
 public record RetryFailedEventsCommand(
     Guid BatchId,
     IEnumerable<Guid>? EventIds = null,
-    string? UserEmail = null
+    string UserEmail = ""
 );
 
 public record RetryFailedEventsResult(

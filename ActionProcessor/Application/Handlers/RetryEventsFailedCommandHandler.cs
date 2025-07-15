@@ -13,23 +13,44 @@ public class RetryEventsFailedCommandHandler(
     {
         try
         {
-            logger.LogInformation("Retrying failed events for batch: {BatchId}", command.BatchId);
+            logger.LogInformation("Retrying failed events for batch: {BatchId} for user: {UserEmail}", 
+                command.BatchId, command.UserEmail);
 
-            IEnumerable<ProcessingEvent> failedEvents;
-
-            //TODO: Melhorar esta logica de busca para retry
-            if (!string.IsNullOrWhiteSpace(command.UserEmail))
+            // Validação obrigatória do email do usuário
+            if (string.IsNullOrWhiteSpace(command.UserEmail))
             {
-                var batch = await batchRepository.GetByIdAsync(command.BatchId, cancellationToken);
-                if (batch == null || batch.UserEmail != command.UserEmail)
-                {
-                    logger.LogWarning("Batch {BatchId} not found or does not belong to user {UserEmail}", 
-                        command.BatchId, command.UserEmail);
-                    return new RetryFailedEventsResult(0, false, "Batch not found or access denied");
-                }
+                return new RetryFailedEventsResult(0, false, "Email do usuário é obrigatório para retry");
             }
 
-            failedEvents = await eventRepository.GetFailedEventsAsync(command.BatchId, cancellationToken);
+            // Verificar se usuário já tem algo em processamento
+            var activeBatch = await batchRepository.GetActiveBatchByEmailAsync(command.UserEmail, cancellationToken);
+            if (activeBatch != null && activeBatch.Id != command.BatchId)
+            {
+                logger.LogWarning("Retry blocked - user {UserEmail} has active batch: {ActiveBatchId}, trying to retry: {BatchId}", 
+                    command.UserEmail, activeBatch.Id, command.BatchId);
+                return new RetryFailedEventsResult(0, false, 
+                    $"Você já possui um arquivo em processamento: '{activeBatch.OriginalFileName}'. " +
+                    $"Só é possível reprocessar um arquivo por vez.");
+            }
+
+            // Validar se o batch pertence ao usuário e buscar detalhes
+            var batch = await batchRepository.GetByIdAsync(command.BatchId, cancellationToken);
+            if (batch == null || batch.UserEmail != command.UserEmail)
+            {
+                logger.LogWarning("Batch {BatchId} not found or does not belong to user {UserEmail}", 
+                    command.BatchId, command.UserEmail);
+                return new RetryFailedEventsResult(0, false, "Arquivo não encontrado ou acesso negado");
+            }
+
+            // Só permitir retry se batch está Failed
+            if (batch.Status != BatchStatus.Failed)
+            {
+                logger.LogWarning("Cannot retry batch {BatchId} with status {Status}", command.BatchId, batch.Status);
+                return new RetryFailedEventsResult(0, false, 
+                    $"Só é possível reprocessar arquivos com status 'Failed'. Status atual: {batch.Status}");
+            }
+
+            var failedEvents = await eventRepository.GetFailedEventsAsync(command.BatchId, cancellationToken);
 
             if (command.EventIds?.Any() == true)
             {

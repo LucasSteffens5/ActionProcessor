@@ -34,7 +34,8 @@ public class BatchRepository : IBatchRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<BatchUpload>> GetAllAsync(int skip = 0, int take = 100, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<BatchUpload>> GetAllAsync(int skip = 0, int take = 100,
+        CancellationToken cancellationToken = default)
     {
         return await _context.BatchUploads
             .OrderByDescending(b => b.CreatedAt)
@@ -43,7 +44,38 @@ public class BatchRepository : IBatchRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<BatchUpload>> GetByEmailAsync(string userEmail, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<BatchUpload>> GetByEmailAsync(string userEmail, int skip = 0, int take = 100,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.BatchUploads
+            .Where(b => b.UserEmail == userEmail)
+            .OrderByDescending(b => b.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<BatchUpload?> GetActiveBatchByEmailAsync(string userEmail,
+        CancellationToken cancellationToken = default)
+        => await _context.BatchUploads
+            .Include(b => b.Events)
+            .Where(b => b.UserEmail == userEmail &&
+                        (b.Status == BatchStatus.Uploaded || b.Status == BatchStatus.Processing))
+            .FirstOrDefaultAsync(cancellationToken);
+
+
+    public async Task<bool> HasPendingEventsByEmailAsync(string userEmail,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.BatchUploads
+            .Include(b => b.Events)
+            .Where(b => b.UserEmail == userEmail)
+            .AnyAsync(b => b.Events.Any(e => e.Status == EventStatus.Pending || e.Status == EventStatus.Processing),
+                cancellationToken);
+    }
+
+    public async Task<IEnumerable<BatchUpload>> GetBatchesByEmailOrderedAsync(string userEmail, int skip = 0,
+        int take = 100, CancellationToken cancellationToken = default)
     {
         return await _context.BatchUploads
             .Where(b => b.UserEmail == userEmail)

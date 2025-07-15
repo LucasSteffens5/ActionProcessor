@@ -34,7 +34,11 @@ public class RetryEventsFailedCommandHandlerTests
     {
         // Arrange
         var batchId = Guid.NewGuid();
-        var command = new RetryFailedEventsCommand(batchId);
+        var userEmail = "test@example.com";
+        var command = new RetryFailedEventsCommand(batchId, null, userEmail);
+
+        var batch = new BatchUpload("test.csv", "test.csv", 1000, userEmail);
+        batch.Fail("Test error");
 
         var failedEvents = new List<ProcessingEvent>
         {
@@ -42,6 +46,12 @@ public class RetryEventsFailedCommandHandlerTests
             CreateFailedEvent(batchId, 2),
             CreateFailedEvent(batchId, 5)
         };
+
+        _batchRepository.GetActiveBatchByEmailAsync(userEmail, Arg.Any<CancellationToken>())
+            .Returns((BatchUpload?)null);
+
+        _batchRepository.GetByIdAsync(batchId, Arg.Any<CancellationToken>())
+            .Returns(batch);
 
         _eventRepository.GetFailedEventsAsync(batchId, Arg.Any<CancellationToken>())
             .Returns(failedEvents);
@@ -63,14 +73,24 @@ public class RetryEventsFailedCommandHandlerTests
     {
         // Arrange
         var batchId = Guid.NewGuid();
+        var userEmail = "test@example.com";
         var event1 = CreateFailedEvent(batchId, 1);
         var event2 = CreateFailedEvent(batchId, 1);
         var event3 = CreateFailedEvent(batchId, 1);
 
         var eventIds = new[] { event1.Id, event3.Id };
-        var command = new RetryFailedEventsCommand(batchId, eventIds);
+        var command = new RetryFailedEventsCommand(batchId, eventIds, userEmail);
+
+        var batch = new BatchUpload("test.csv", "test.csv", 1000, userEmail);
+        batch.Fail("Test error");
 
         var failedEvents = new List<ProcessingEvent> { event1, event2, event3 };
+
+        _batchRepository.GetActiveBatchByEmailAsync(userEmail, Arg.Any<CancellationToken>())
+            .Returns((BatchUpload?)null);
+
+        _batchRepository.GetByIdAsync(batchId, Arg.Any<CancellationToken>())
+            .Returns(batch);
 
         _eventRepository.GetFailedEventsAsync(batchId, Arg.Any<CancellationToken>())
             .Returns(failedEvents);
@@ -92,7 +112,17 @@ public class RetryEventsFailedCommandHandlerTests
     {
         // Arrange
         var batchId = Guid.NewGuid();
-        var command = new RetryFailedEventsCommand(batchId);
+        var userEmail = "test@example.com";
+        var command = new RetryFailedEventsCommand(batchId, null, userEmail);
+
+        var batch = new BatchUpload("test.csv", "test.csv", 1000, userEmail);
+        batch.Fail("Test error");
+
+        _batchRepository.GetActiveBatchByEmailAsync(userEmail, Arg.Any<CancellationToken>())
+            .Returns((BatchUpload?)null);
+
+        _batchRepository.GetByIdAsync(batchId, Arg.Any<CancellationToken>())
+            .Returns(batch);
 
         _eventRepository.GetFailedEventsAsync(batchId, Arg.Any<CancellationToken>())
             .ThrowsAsync(new Exception("Database error"));
@@ -111,7 +141,17 @@ public class RetryEventsFailedCommandHandlerTests
     {
         // Arrange
         var batchId = Guid.NewGuid();
-        var command = new RetryFailedEventsCommand(batchId);
+        var userEmail = "test@example.com";
+        var command = new RetryFailedEventsCommand(batchId, null, userEmail);
+
+        var batch = new BatchUpload("test.csv", "test.csv", 1000, userEmail);
+        batch.Fail("Test error");
+
+        _batchRepository.GetActiveBatchByEmailAsync(userEmail, Arg.Any<CancellationToken>())
+            .Returns((BatchUpload?)null);
+
+        _batchRepository.GetByIdAsync(batchId, Arg.Any<CancellationToken>())
+            .Returns(batch);
 
         _eventRepository.GetFailedEventsAsync(batchId, Arg.Any<CancellationToken>())
             .Returns(new List<ProcessingEvent>());

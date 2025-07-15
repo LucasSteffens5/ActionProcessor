@@ -14,7 +14,36 @@ public class FileCommandHandler(
     {
         try
         {
-            logger.LogInformation("Processing file upload: {FileName}", command.File.FileName);
+            logger.LogInformation("Processing file upload: {FileName} for user: {UserEmail}", 
+                command.File.FileName, command.UserEmail);
+
+            // Validação 0: Email obrigatório
+            if (string.IsNullOrWhiteSpace(command.UserEmail))
+            {
+                logger.LogWarning("Upload blocked - missing user email");
+                return new UploadFileResult(Guid.Empty, command.File.FileName ?? "unknown", 0, false, 
+                    "Email do usuário é obrigatório para envio de arquivo.");
+            }
+
+            // Validação 1: Verificar se há batch ativo
+            var activeBatch = await batchRepository.GetActiveBatchByEmailAsync(command.UserEmail, cancellationToken);
+            if (activeBatch != null)
+            {
+                logger.LogWarning("Upload blocked - user {UserEmail} has active batch: {BatchId}", 
+                    command.UserEmail, activeBatch.Id);
+                return new UploadFileResult(Guid.Empty, command.File.FileName ?? "unknown", 0, false, 
+                    $"Você já possui um arquivo em processamento: '{activeBatch.OriginalFileName}'. " +
+                    $"Aguarde a conclusão antes de enviar um novo arquivo.");
+            }
+
+            // Validação 2: Verificar se há eventos pendentes em outros batches
+            var hasPendingEvents = await batchRepository.HasPendingEventsByEmailAsync(command.UserEmail, cancellationToken);
+            if (hasPendingEvents)
+            {
+                logger.LogWarning("Upload blocked - user {UserEmail} has pending events", command.UserEmail);
+                return new UploadFileResult(Guid.Empty, command.File.FileName ?? "unknown", 0, false, 
+                    "Você possui eventos ainda em processamento. Aguarde a conclusão de todos os eventos antes de enviar um novo arquivo.");
+            }
 
             var batch = new BatchUpload(
                 fileName: Guid.NewGuid().ToString(),
@@ -74,14 +103,15 @@ public class FileCommandHandler(
             batch.SetTotalEvents(events.Count);
             await batchRepository.UpdateAsync(batch, cancellationToken);
 
-            logger.LogInformation("File uploaded successfully. BatchId: {BatchId}, Events: {EventCount}",
-                batch.Id, events.Count);
+            logger.LogInformation("File uploaded successfully. BatchId: {BatchId}, Events: {EventCount} for user: {UserEmail}",
+                batch.Id, events.Count, command.UserEmail);
 
             return new UploadFileResult(batch.Id, batch.OriginalFileName, events.Count, true);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error processing file upload: {FileName}", command.File.FileName);
+            logger.LogError(ex, "Error processing file upload: {FileName} for user: {UserEmail}", 
+                command.File.FileName, command.UserEmail);
             return new UploadFileResult(Guid.Empty, command.File.FileName ?? "unknown", 0, false, ex.Message);
         }
     }

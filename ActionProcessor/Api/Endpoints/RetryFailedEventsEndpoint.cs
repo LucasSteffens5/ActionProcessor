@@ -11,7 +11,7 @@ internal sealed class RetryFailedEventsEndpoint : IEndpoint
                 Guid batchId,
                 RetryEventsFailedCommandHandler commandHandler,
                 Guid[]? eventIds = null,
-                string? userEmail = null) =>
+                string userEmail = "") =>
             {
                 var command = new RetryFailedEventsCommand(batchId, eventIds, userEmail);
                 var result = await commandHandler.HandleAsync(command);
@@ -20,6 +20,7 @@ internal sealed class RetryFailedEventsEndpoint : IEndpoint
             })
             .WithName("RetryFailedEvents")
             .WithSummary("Retry failed events for a batch")
+            .WithDescription("Retry failed events for a specific batch. Requires user email for validation.")
             .Produces<RetryFailedEventsResult>(200)
             .Produces(400)
             .WithTags(Tags.Tags.Files);
