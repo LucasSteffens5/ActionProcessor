@@ -43,10 +43,10 @@ public class EventProcessorService(
 
         var pendingEvents = await eventRepository.GetPendingEventsAsync(_batchSize, cancellationToken);
 
-        if (!pendingEvents.Any())
+        if (pendingEvents.Count == 0)
             return;
 
-        logger.LogInformation("Processing {Count} pending events", pendingEvents.Count());
+        logger.LogInformation("Processing {Count} pending events", pendingEvents.Count);
 
         var processingTasks = pendingEvents.Select(evt => ProcessEventAsync(
             evt, eventRepository, batchRepository, actionHandlerFactory, cancellationToken));
@@ -67,7 +67,7 @@ public class EventProcessorService(
                 processingEvent.Id, processingEvent.Document);
             
             processingEvent.Start();
-            //TODO: Por o batch para processando também caso não esteja, update se nao ja estiver, cuidar da concorrencia e do conflito de status
+            //TODO: Por o batch para processando também caso não esteja, update se nao estiver, cuidar da concorrencia e do conflito de status
             await eventRepository.UpdateAsync(processingEvent, cancellationToken);
             
             var handler = actionHandlerFactory.GetHandler(processingEvent.ActionType);
