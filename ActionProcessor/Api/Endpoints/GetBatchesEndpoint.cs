@@ -1,5 +1,6 @@
 using ActionProcessor.Application.Handlers;
 using ActionProcessor.Application.Queries;
+using ActionProcessor.Application.Results;
 
 namespace ActionProcessor.Api.Endpoints;
 
