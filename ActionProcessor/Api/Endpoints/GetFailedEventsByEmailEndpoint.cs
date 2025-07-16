@@ -4,24 +4,22 @@ using ActionProcessor.Application.Results;
 
 namespace ActionProcessor.Api.Endpoints;
 
-internal sealed class GetBatchesEndpoint : IEndpoint
+internal sealed class GetFailedEventsByEmailEndpoint : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/files/batches", async (
-                GetBatchListQueryHandler queryHandler,
-                int skip = 0,
-                int take = 100,
+        app.MapGet("api/files/failed-events", async (
+                GetFailedEventsQueryHandler queryHandler,
                 string? userEmail = null) =>
             {
-                var query = new GetBatchListQuery(skip, take, userEmail);
+                var query = new GetFailedEventsQuery(null, userEmail);
                 var result = await queryHandler.HandleAsync(query);
 
                 return Results.Ok(result);
             })
-            .WithName("GetBatches")
-            .WithSummary("Get list of all batches")
-            .Produces<GetBatchListResult>(200)
+            .WithName("GetFailedEventsByEmail")
+            .WithSummary("Get failed events by user email")
+            .Produces<GetFailedEventsByBatchResult>(200)
             .WithTags(Tags.Tags.Files);
     }
 }

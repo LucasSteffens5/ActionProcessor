@@ -57,6 +57,8 @@ builder.Services.AddScoped<RetryEventsFailedCommandHandler>();
 builder.Services.AddScoped<GetBatchStatusQueryHandler>();
 builder.Services.AddScoped<GetBatchListQueryHandler>();
 builder.Services.AddScoped<GetFailedEventsQueryHandler>();
+builder.Services.AddScoped<GetUserBatchesQueryHandler>();
+builder.Services.AddScoped<CheckUserStatusQueryHandler>();
 
 // Validators
 builder.Services.AddValidatorsFromAssemblyContaining<UploadFileCommandValidator>();

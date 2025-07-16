@@ -1,5 +1,6 @@
 using ActionProcessor.Application.Handlers;
 using ActionProcessor.Application.Queries;
+using ActionProcessor.Application.Results;
 
 namespace ActionProcessor.Api.Endpoints;
 
@@ -14,12 +15,7 @@ internal sealed class GetBatchStatusEndpoint : IEndpoint
                 var query = new GetBatchStatusQuery(batchId);
                 var result = await queryHandler.HandleAsync(query);
 
-                if (result == null)
-                {
-                    return Results.NotFound($"Batch {batchId} not found");
-                }
-
-                return Results.Ok(result);
+                return result == null ? Results.NotFound($"Batch {batchId} not found") : Results.Ok(result);
             })
             .WithName("GetBatchStatus")
             .WithSummary("Get status of a specific batch")
