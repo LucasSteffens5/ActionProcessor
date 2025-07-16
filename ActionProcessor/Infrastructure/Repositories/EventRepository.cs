@@ -26,7 +26,7 @@ public class EventRepository(ActionProcessorDbContext context) : IEventRepositor
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ProcessingEvent>> GetPendingEventsAsync(int limit = 10,
+    public async Task<List<ProcessingEvent>> GetPendingEventsAsync(int limit = 10,
         CancellationToken cancellationToken = default)
         => await context.ProcessingEvents
             .FromSql($"""
