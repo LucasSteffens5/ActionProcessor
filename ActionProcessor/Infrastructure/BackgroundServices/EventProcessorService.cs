@@ -65,12 +65,11 @@ public class EventProcessorService(
         {
             logger.LogDebug("Processing event {EventId} for document {Document}",
                 processingEvent.Id, processingEvent.Document);
-
-            // Mark as processing
+            
             processingEvent.Start();
+            //TODO: Por o batch para processando também caso não esteja, update se nao ja estiver, cuidar da concorrencia e do conflito de status
             await eventRepository.UpdateAsync(processingEvent, cancellationToken);
-
-            // Get action handler
+            
             var handler = actionHandlerFactory.GetHandler(processingEvent.ActionType);
             if (handler == null)
             {
@@ -135,8 +134,7 @@ public class EventProcessorService(
                 return;
 
             var progress = batch.GetProgress();
-
-            // Check if all events are processed
+            
             if (progress.ProcessedEvents >= progress.TotalEvents)
             {
                 batch.Complete();
