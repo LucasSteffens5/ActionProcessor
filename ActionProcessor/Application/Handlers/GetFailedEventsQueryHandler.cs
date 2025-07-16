@@ -9,7 +9,7 @@ public class GetFailedEventsQueryHandler(
     IEventRepository eventRepository,
     ILogger<GetFailedEventsQueryHandler> logger)
 {
-    public async Task<GetFailedEventsResult> HandleAsync(GetFailedEventsQuery query, CancellationToken cancellationToken = default)
+    public async Task<GetFailedEventsByBatchResult> HandleAsync(GetFailedEventsQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -39,12 +39,12 @@ public class GetFailedEventsQueryHandler(
                 evt.CompletedAt ?? evt.CreatedAt
             ));
 
-            return new GetFailedEventsResult(failedEventSummaries);
+            return new GetFailedEventsByBatchResult(failedEventSummaries);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting failed events");
-            return new GetFailedEventsResult(Enumerable.Empty<FailedEventSummary>());
+            return new GetFailedEventsByBatchResult(Enumerable.Empty<FailedEventSummary>());
         }
     }
 }

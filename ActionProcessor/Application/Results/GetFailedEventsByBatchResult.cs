@@ -1,6 +1,6 @@
 namespace ActionProcessor.Application.Results;
 
-public sealed record GetFailedEventsResult(
+public sealed record GetFailedEventsByBatchResult(
     IEnumerable<FailedEventSummary> FailedEvents
 );
 
