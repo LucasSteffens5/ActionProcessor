@@ -1,6 +1,5 @@
 using ActionProcessor.Application.Queries;
-using ActionProcessor.Domain.Interfaces;
-using ActionProcessor.Domain.Entities;
+using ActionProcessor.Application.Handlers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ActionProcessor.Api.Endpoints;
@@ -17,10 +16,12 @@ public class GetUserBatchesEndpoint : IEndpoint
             .Produces<string>(400);
     }
 
-    private static async Task<IResult> HandleAsync(
+    public static async Task<IResult> HandleAsync(
         [FromRoute] string email,
-        [FromServices] IBatchRepository batchRepository,
+        [FromServices] GetUserBatchesQueryHandler queryHandler,
         [FromServices] ILogger<GetUserBatchesEndpoint> logger,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 100,
         CancellationToken cancellationToken = default)
     {
         try
@@ -30,22 +31,21 @@ public class GetUserBatchesEndpoint : IEndpoint
                 return Results.BadRequest("Email é obrigatório");
             }
 
-            logger.LogInformation("Getting batches for user: {UserEmail}", email);
+            var query = new GetUserBatchesQuery(email, skip, take);
+            var result = await queryHandler.HandleAsync(query, cancellationToken);
 
-            var batches = await batchRepository.GetBatchesByEmailOrderedAsync(email, 0, 100, cancellationToken);
-
-            var response = batches.Select(batch => new UserBatchResponse(
+            var response = result.Batches.Select(batch => new UserBatchResponse(
                 Id: batch.Id,
                 OriginalFileName: batch.OriginalFileName,
-                Status: batch.Status.ToString(),
+                Status: batch.Status,
                 CreatedAt: batch.CreatedAt,
                 StartedAt: batch.StartedAt,
                 CompletedAt: batch.CompletedAt,
                 TotalEvents: batch.TotalEvents,
-                ProcessedEvents: batch.Events.Count(e => e.Status is EventStatus.Completed or EventStatus.Failed),
-                FailedEvents: batch.Events.Count(e => e.Status == EventStatus.Failed),
-                IsActive: batch.IsActive(),
-                HasPendingEvents: batch.HasPendingEvents()
+                ProcessedEvents: batch.ProcessedEvents,
+                FailedEvents: batch.FailedEvents,
+                IsActive: batch.IsActive,
+                HasPendingEvents: batch.HasPendingEvents
             ));
 
             return Results.Ok(response);
