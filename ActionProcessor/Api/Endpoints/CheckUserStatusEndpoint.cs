@@ -33,12 +33,7 @@ public class CheckUserStatusEndpoint : IEndpoint
             var query = new CheckUserStatusQuery(email);
             var result = await queryHandler.HandleAsync(query, cancellationToken);
 
-            if (result == null)
-            {
-                return Results.BadRequest("Erro ao verificar status do usuário");
-            }
-
-            return Results.Ok(result);
+            return result == null ? Results.BadRequest("Erro ao verificar status do usuário") : Results.Ok(result);
         }
         catch (Exception ex)
         {
