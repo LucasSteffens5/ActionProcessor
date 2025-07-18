@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ActionProcessor.Domain.Entities;
 
 public class BatchUpload
@@ -13,13 +15,15 @@ public class BatchUpload
     public DateTime? StartedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
     public string? ErrorMessage { get; private set; }
-
-    // Navigation properties
+    
+    [Timestamp]
+    public byte[] RowVersion { get; private set; } = null!;
+    
     public ICollection<ProcessingEvent> Events { get; private set; } = new List<ProcessingEvent>();
 
     private BatchUpload()
     {
-    } // EF Constructor
+    }
 
     public BatchUpload(string fileName, string originalFileName, long fileSizeBytes, string userEmail)
     {
@@ -55,6 +59,25 @@ public class BatchUpload
         Status = BatchStatus.Failed;
         ErrorMessage = errorMessage;
         CompletedAt = DateTime.UtcNow;
+    }
+
+    public bool StartProcessing()
+    {
+        if (Status != BatchStatus.Uploaded) return false;
+        Status = BatchStatus.Processing;
+        StartedAt = DateTime.UtcNow;
+        return true;
+    }
+
+    public BatchStatus DetermineCompletionStatus()
+    {
+        if (Events.Count == 0) return BatchStatus.Failed;
+        
+        var allFailed = Events.All(e => e.Status == EventStatus.Failed);
+        if (allFailed) return BatchStatus.Failed;
+        
+        var allProcessed = Events.All(e => e.Status is EventStatus.Completed or EventStatus.Failed);
+        return allProcessed ? BatchStatus.Completed : BatchStatus.Processing;
     }
 
     public void SetTotalEvents(int totalEvents)
