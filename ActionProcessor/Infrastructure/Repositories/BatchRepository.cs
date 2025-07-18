@@ -1,6 +1,7 @@
 using ActionProcessor.Domain.Entities;
 using ActionProcessor.Domain.Interfaces;
 using ActionProcessor.Infrastructure.Data;
+using ActionProcessor.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ActionProcessor.Infrastructure.Repositories;
@@ -76,27 +77,15 @@ public class BatchRepository(ActionProcessorDbContext context) : IBatchRepositor
 
 
     public async Task<bool> TryUpdateAsync(BatchUpload batch, CancellationToken cancellationToken = default)
-    {
-        const int maxRetries = 3;
-        for (var i = 0; i < maxRetries; i++)
-        {
-            try
+        => await EfRetryHelper.RetryOnConcurrencyAsync(
+            async () =>
             {
                 context.BatchUploads.Update(batch);
                 await context.SaveChangesAsync(cancellationToken);
-                return true;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (i == maxRetries - 1) return false;
+            },
+            async () => await context.Entry(batch).ReloadAsync(cancellationToken)
+        );
 
-                // Recarregar entidade com nova versão
-                await context.Entry(batch).ReloadAsync(cancellationToken);
-            }
-        }
-
-        return false;
-    }
 
     public async Task<bool> StartProcessingAsync(Guid batchId, CancellationToken cancellationToken = default)
     {
