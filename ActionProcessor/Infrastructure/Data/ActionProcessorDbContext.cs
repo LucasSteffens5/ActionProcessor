@@ -22,6 +22,7 @@ public class ActionProcessorDbContext : DbContext
             entity.Property(e => e.UserEmail).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Status);
             entity.Property(e => e.ErrorMessage).HasMaxLength(2000);
+            entity.Property(e => e.RowVersion).IsRowVersion();
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.UserEmail);
