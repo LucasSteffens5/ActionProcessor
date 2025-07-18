@@ -47,7 +47,6 @@ public class BatchRepository(ActionProcessorDbContext context) : IBatchRepositor
             .Take(take)
             .ToListAsync(cancellationToken);
 
-
     public async Task<BatchUpload?> GetActiveBatchByEmailAsync(string userEmail,
         CancellationToken cancellationToken = default)
         => await context.BatchUploads
@@ -55,7 +54,6 @@ public class BatchRepository(ActionProcessorDbContext context) : IBatchRepositor
             .Where(b => b.UserEmail == userEmail &&
                         (b.Status == BatchStatus.Uploaded || b.Status == BatchStatus.Processing))
             .FirstOrDefaultAsync(cancellationToken);
-
 
     public async Task<bool> HasPendingEventsByEmailAsync(string userEmail,
         CancellationToken cancellationToken = default)
@@ -65,7 +63,6 @@ public class BatchRepository(ActionProcessorDbContext context) : IBatchRepositor
             .AnyAsync(b => b.Events.Any(e => e.Status == EventStatus.Pending || e.Status == EventStatus.Processing),
                 cancellationToken);
 
-
     public async Task<IEnumerable<BatchUpload>> GetBatchesByEmailOrderedAsync(string userEmail, int skip = 0,
         int take = 100, CancellationToken cancellationToken = default)
         => await context.BatchUploads
@@ -74,7 +71,6 @@ public class BatchRepository(ActionProcessorDbContext context) : IBatchRepositor
             .Skip(skip)
             .Take(take)
             .ToListAsync(cancellationToken);
-
 
     public async Task<bool> TryUpdateAsync(BatchUpload batch, CancellationToken cancellationToken = default)
         => await EfRetryHelper.RetryOnConcurrencyAsync(
@@ -86,16 +82,13 @@ public class BatchRepository(ActionProcessorDbContext context) : IBatchRepositor
             async () => await context.Entry(batch).ReloadAsync(cancellationToken)
         );
 
-
     public async Task<bool> StartProcessingAsync(Guid batchId, CancellationToken cancellationToken = default)
     {
         var batch = await GetByIdAsync(batchId, cancellationToken);
         if (batch == null) return false;
 
         if (batch.StartProcessing())
-        {
             return await TryUpdateAsync(batch, cancellationToken);
-        }
 
         return false;
     }
