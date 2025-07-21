@@ -10,5 +10,6 @@ public interface IEventRepository
     Task<IEnumerable<ProcessingEvent>> GetEventsByBatchIdAsync(Guid batchId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ProcessingEvent>> GetFailedEventsAsync(Guid? batchId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<ProcessingEvent>> GetFailedEventsByEmailAsync(string userEmail, CancellationToken cancellationToken = default);
+    Task ProcessEventsAsync(int limit, Func<List<ProcessingEvent>, Task> processor, CancellationToken cancellationToken = default);
 }
 

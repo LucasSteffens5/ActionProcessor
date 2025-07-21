@@ -41,22 +41,19 @@ public class EventProcessorService(
         var batchRepository = scope.ServiceProvider.GetRequiredService<IBatchRepository>();
         var actionHandlerFactory = scope.ServiceProvider.GetRequiredService<IActionHandlerFactory>();
 
-        var pendingEvents = await eventRepository.GetPendingEventsAsync(_batchSize, cancellationToken);
+        await eventRepository.ProcessEventsAsync(_batchSize, async (events) =>
+        {
+            logger.LogInformation("Processing {Count} pending events with pessimistic lock", events.Count);
 
-        if (pendingEvents.Count == 0)
-            return;
+            var processingTasks = events.Select(evt => ProcessEventAsync(
+                evt, batchRepository, actionHandlerFactory, cancellationToken));
 
-        logger.LogInformation("Processing {Count} pending events", pendingEvents.Count);
-
-        var processingTasks = pendingEvents.Select(evt => ProcessEventAsync(
-            evt, eventRepository, batchRepository, actionHandlerFactory, cancellationToken));
-
-        await Task.WhenAll(processingTasks);
+            await Task.WhenAll(processingTasks);
+        }, cancellationToken);
     }
 
     private async Task ProcessEventAsync(
         ProcessingEvent processingEvent,
-        IEventRepository eventRepository,
         IBatchRepository batchRepository,
         IActionHandlerFactory actionHandlerFactory,
         CancellationToken cancellationToken)
@@ -66,31 +63,24 @@ public class EventProcessorService(
             logger.LogDebug("Processing event {EventId} for document {Document}",
                 processingEvent.Id, processingEvent.Document);
             
-            processingEvent.Start();
-            await eventRepository.UpdateAsync(processingEvent, cancellationToken);
-            
             await batchRepository.StartProcessingAsync(processingEvent.BatchId, cancellationToken);
             
             var handler = actionHandlerFactory.GetHandler(processingEvent.ActionType);
             if (handler == null)
             {
                 processingEvent.Fail($"No handler found for action type: {processingEvent.ActionType}");
-                await eventRepository.UpdateAsync(processingEvent, cancellationToken);
                 return;
             }
-
-            // Prepare event data
+            
             var eventData = new EventData(
                 processingEvent.Document,
                 processingEvent.ClientIdentifier,
                 processingEvent.ActionType,
                 processingEvent.SideEffectsJson
             );
-
-            // Execute action
+            
             var result = await handler.ExecuteAsync(eventData, cancellationToken);
-
-            // Update event status
+            
             if (result.IsSuccess)
             {
                 processingEvent.Complete(result.ResponseData);
@@ -101,25 +91,13 @@ public class EventProcessorService(
                 processingEvent.Fail(result.ErrorMessage ?? "Unknown error");
                 logger.LogWarning("Event {EventId} failed: {Error}", processingEvent.Id, result.ErrorMessage);
             }
-
-            await eventRepository.UpdateAsync(processingEvent, cancellationToken);
-
-            // Check batch completion com retry
+            
             await CheckBatchCompletionAsync(processingEvent.BatchId, batchRepository, cancellationToken);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error processing event {EventId}", processingEvent.Id);
-
-            try
-            {
-                processingEvent.Fail($"Processing error: {ex.Message}");
-                await eventRepository.UpdateAsync(processingEvent, cancellationToken);
-            }
-            catch (Exception updateEx)
-            {
-                logger.LogError(updateEx, "Error updating failed event {EventId}", processingEvent.Id);
-            }
+            processingEvent.Fail($"Processing error: {ex.Message}");
         }
     }
 
@@ -166,7 +144,6 @@ public class EventProcessorService(
                 logger.LogError(ex, "Error checking batch completion for {BatchId}, attempt {Attempt}", batchId, i + 1);
                 if (i == maxRetries - 1) break;
                 
-                // Pequeno delay antes de tentar novamente
                 await Task.Delay(TimeSpan.FromMilliseconds(100 * (i + 1)), cancellationToken);
             }
         }
