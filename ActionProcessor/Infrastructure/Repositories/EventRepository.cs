@@ -26,7 +26,7 @@ public class EventRepository(ActionProcessorDbContext context) : IEventRepositor
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<ProcessingEvent>> GetPendingEventsAsync(int limit = 10,
+    public async Task<List<ProcessingEvent>> GetPendingEventsAsync(int limit = 10,
         CancellationToken cancellationToken = default)
         => await context.ProcessingEvents
             .FromSql($"""
@@ -71,5 +71,47 @@ public class EventRepository(ActionProcessorDbContext context) : IEventRepositor
             .Where(e => e.Status == EventStatus.Failed && e.Batch.UserEmail == userEmail)
             .OrderByDescending(e => e.CompletedAt)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task ProcessEventsAsync(int limit, Func<List<ProcessingEvent>, Task> processor, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        
+        try
+        {
+            context.Database.SetCommandTimeout(TimeSpan.FromMinutes(5)); // TODO: Ajustar este tempo conforme necessário
+            
+            var events = await context.ProcessingEvents
+                .FromSql($"""
+                          SELECT * FROM "processing_events" 
+                          WHERE "status" = 0 
+                          ORDER BY "created_at" 
+                          LIMIT {limit} 
+                          FOR UPDATE SKIP LOCKED
+                          """)
+                .ToListAsync(cancellationToken);
+
+            if (events.Count == 0)
+            {
+                await transaction.CommitAsync(cancellationToken);
+                return;
+            }
+            
+            foreach (var evt in events)
+            {
+                evt.Start();
+            }
+            await context.SaveChangesAsync(cancellationToken);
+            
+            await processor(events);
+            
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

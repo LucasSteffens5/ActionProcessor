@@ -12,4 +12,6 @@ public interface IBatchRepository
     Task<BatchUpload?> GetActiveBatchByEmailAsync(string userEmail, CancellationToken cancellationToken = default);
     Task<bool> HasPendingEventsByEmailAsync(string userEmail, CancellationToken cancellationToken = default);
     Task<IEnumerable<BatchUpload>> GetBatchesByEmailOrderedAsync(string userEmail, int skip = 0, int take = 100, CancellationToken cancellationToken = default);
+    Task<bool> TryUpdateAsync(BatchUpload batch, CancellationToken cancellationToken = default);
+    Task<bool> StartProcessingAsync(Guid batchId, CancellationToken cancellationToken = default);
 }
